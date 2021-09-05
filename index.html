@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Json2TsInterface</title>
+  <link rel="stylesheet" href="./assets/main.css"></link>
+  <link rel="stylesheet" href="./assets/codemirror.css">
+  <link rel="stylesheet" href="./assets/addon/lint.css">
+  <link rel="stylesheet" href="./assets/mode/mdn-like.css">
+  <link rel="stylesheet" href="./assets/mode/idea.css">
+  <script src="./assets/json2tsinterface.js"></script>
+  <script src="./assets/codemirror.js"></script>
+  <script src="./assets/mode/javascript.js"></script>
+  <script src="./assets/addon/placeholder.js"></script>
+  <script src="./assets/addon/lint.js"></script>
+  <script src="./assets/addon/autorefresh.js"></script>
+  <script src="./assets/addon/json-lint.js"></script>
+  <script src="./assets/addon/matchbrackets.js"></script>
+  <script src="./assets/addon/active-line.js"></script>
+  <script src="./assets/addon/closebrackets.js"></script>
+  <style>
+    .CodeMirror {
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+<div id="head">
+  <h1>Json2TsInterface</h1>
+  <p>将 JSON 数据转换成 TypeScript的Interface</p>
+</div>
+<div id="content">
+  <div id="input">
+    <div class="sub-head">
+      <button class="conversion-btn" id="conversion">一键转换</button>
+    </div>
+    <div class="operate-area">
+      <textarea name="input" id="input-operate" placeholder="请输入转换的JSON"></textarea>
+    </div>
+  </div>
+  <div id="output">
+    <div class="sub-head">
+      <button class="copy-btn disabled" id="copy">复制数据</button>
+      <p id="copySuccessText" class="hidden">复制成功！</p>
+    </div>
+    <div class="operate-area">
+      <textarea name="input" id="output-operate" disabled placeholder=""></textarea>
+    </div>
+  </div>
+</div>
+</body>
+<script>
+  let conversion = document.getElementById('conversion');
+  let copyBtn = document.getElementById('copy');
+  let copySuccessBtn = document.getElementById('copySuccessText')
+  let inputOperate = document.getElementById('input-operate');
+  var inputEditor = CodeMirror.fromTextArea(inputOperate,{
+    mode: 'application/json',
+    tabSize: 2,
+    smartIndent: true, // 是否智能缩进
+    styleActiveLine: true, // 当前行高亮
+    lineNumbers: true, // 显示行号
+    theme: 'mdn-like',
+    gutters: ["CodeMirror-linenumbers"],
+    lineWrapping: true, // 自动换行
+    matchBrackets: true, // 括号匹配显示
+    autoCloseBrackets: true, // 输入和退格时成对
+    autoRefresh: true, // 自动刷新
+    foldOptions: {
+            widget: (from, to) => {
+              var count = undefined;
+
+              // Get open / close token
+              var startToken = '{', endToken = '}';
+              var prevLine = window.editor_json.getLine(from.line);
+              if (prevLine.lastIndexOf('[') > prevLine.lastIndexOf('{')) {
+                startToken = '[', endToken = ']';
+              }
+
+              // Get json content
+              var internal = window.editor_json.getRange(from, to);
+              var toParse = startToken + internal + endToken;
+
+              // Get key count
+              try {
+                var parsed = JSON.parse(toParse);
+                count = Object.keys(parsed).length;
+              } catch(e) { }
+
+              return count ? `\u21A4${count}\u21A6` : '\u2194';
+            }
+          }
+  });
+
+  inputEditor.on('change',function (cm) {
+    console.log(cm.getValue())
+    if(!includesClass(copySuccessBtn,'disabled')) {
+      copyBtn.classList.add('disabled');
+    }
+  })
+
+  let outputOperate = document.getElementById('output-operate');
+  var outputEditor = CodeMirror.fromTextArea(outputOperate, {
+    mode: "javascript",
+    lineNumbers: true,
+    lineWrapping: true,
+    tabSize: 2,
+    smartIndent: true, // 是否智能缩进
+    styleActiveLine: true, // 当前行高亮
+    lineNumbers: true, // 显示行号
+    theme: 'idea',
+    gutters: ["CodeMirror-linenumbers"],
+    lineWrapping: true, // 自动换行
+    matchBrackets: true, // 括号匹配显示
+    autoCloseBrackets: true, // 输入和退格时成对
+    autoRefresh: true, // 自动刷新
+    readOnly:'nocursor'
+  });
+
+  conversion.onclick = function () {
+    try {
+      data = JSON.parse(inputEditor.getValue());
+      let interface = toInterface(data)
+      console.log("🚀 ~ file: index.html ~ line 103 ~ interface", interface)
+      outputEditor.setValue(interface);
+      copyBtn.classList.remove('disabled');
+    } catch (err) {
+      console.error(err);
+      outputEditor.setValue(err);
+    }
+  }
+
+copyBtn.addEventListener('click', async function () {
+  let interface = outputEditor.getValue();
+  if(!includesClass(copyBtn,'disabled')) {
+    let s = await navigator.clipboard.writeText(interface);
+    if(includesClass(copySuccessBtn,'hidden')) {
+      copySuccessBtn.classList.remove('hidden');
+      setTimeout(() => {
+        copySuccessBtn.classList.add('hidden')
+      }, 2500)
+    }
+  }
+
+})
+// 判断dom是否存在某个 class
+function includesClass(dom,className) {
+  return Array.from(dom.classList).includes(className);
+}
+</script>
+</html>
