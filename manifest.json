@@ -1,0 +1,16 @@
+{
+  "name": "Json2TsInterface",
+  "description": "将 JSON 数据转换成 TypeScript的Interface",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_title": "Json2TsInterface"
+  },
+ "permissions": ["tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "128": "j2.png"
+  }
+}
