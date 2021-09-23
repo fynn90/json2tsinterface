@@ -6,7 +6,6 @@
   "action": {
     "default_title": "Json2TsInterface"
   },
- "permissions": ["tabs"],
   "background": {
     "service_worker": "background.js"
   },
